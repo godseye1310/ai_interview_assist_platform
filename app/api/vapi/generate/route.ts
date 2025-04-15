@@ -9,7 +9,11 @@ import { db } from "@/firebase/admin";
 
 export async function GET() {
 	return Response.json(
-		{ success: true, data: "Hello, Next.js!" },
+		{
+			success: true,
+			message: "Hello, Next.js!",
+			data: "AI Interview Assistant",
+		},
 		{ status: 200 }
 	);
 }
