@@ -11,12 +11,12 @@ const page = () => {
 			<section className="card-cta">
 				<div className="flex flex-col gap-6 max-w-lg">
 					<h2 className="">
-						Get Interview Ready with AI Powered Practice and
-						feedback
+						Get Interview-Ready with AI-Powered Practice and
+						Feedback.
 					</h2>
 					<p className="text-light-100 text-lg">
-						Get instant feedback on your answers and practice your
-						interview skills with our AI powered practice tool.
+						Practice on real interview questions & get instant
+						feedback with our AI-powered platform.
 					</p>
 					<Button asChild className="btn-primary max-sm:w-full">
 						<Link href="/interview">
