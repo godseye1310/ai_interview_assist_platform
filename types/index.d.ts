@@ -43,8 +43,10 @@ interface InterviewCardProps {
 	userId?: string;
 	role: string;
 	type: string;
+	level: string;
 	techstack: string[];
 	createdAt?: string;
+	coverImage?: string;
 }
 
 interface AgentProps {

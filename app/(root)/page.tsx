@@ -1,11 +1,34 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import InterviewCard from "@/components/InterviewCard";
 import { Button } from "@/components/ui/button";
-import { dummyInterviews } from "@/constants";
+// import { dummyInterviews } from "@/constants";
+import { getCurrentUser } from "@/lib/actions/auth.action";
+import {
+	fetchInterviewListByUserId,
+	fetchLatestInterviewsList,
+} from "@/lib/actions/general.actions";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-const page = () => {
+const page = async () => {
+	const user = await getCurrentUser();
+
+	// parallel fetching using Promise.all
+	const [userInterviewsList, latestInterviewsList] = await Promise.all([
+		fetchInterviewListByUserId(user?.id!),
+		fetchLatestInterviewsList({ userId: user?.id! }),
+	]);
+	// const interviewsList = await fetchInterviewListByUserId(user?.id!);
+	// const latestInterviews = await fetchLatestInterviewsList({ userId: user?.id! });
+
+	const hasUserInterviews = userInterviewsList
+		? userInterviewsList?.length > 0
+		: false;
+	const hasLatestInterviews = latestInterviewsList
+		? latestInterviewsList?.length > 0
+		: false;
+
 	return (
 		<>
 			<section className="card-cta">
@@ -37,13 +60,18 @@ const page = () => {
 				<h2>Your Interviews</h2>
 
 				<div className="interviews-section">
-					{dummyInterviews.map((interview) => {
-						return (
-							<InterviewCard key={interview.id} {...interview} />
-						);
-					})}
-
-					{/* <p>You haven&apos;t started any interviews yet.</p> */}
+					{hasUserInterviews ? (
+						userInterviewsList?.map((interview) => {
+							return (
+								<InterviewCard
+									key={interview.id}
+									{...interview}
+								/>
+							);
+						})
+					) : (
+						<p>You haven&apos;t started any interviews yet.</p>
+					)}
 				</div>
 			</section>
 
@@ -51,10 +79,18 @@ const page = () => {
 				<h2>Take an Interview</h2>
 
 				<div className="interviews-section">
-					{dummyInterviews.map((interview) => (
-						<InterviewCard key={interview.id} {...interview} />
-					))}
-					{/* <p>There are no interviews yet.</p> */}
+					{hasLatestInterviews ? (
+						latestInterviewsList?.map((interview) => {
+							return (
+								<InterviewCard
+									key={interview.id}
+									{...interview}
+								/>
+							);
+						})
+					) : (
+						<p>There are no new interviews yet.</p>
+					)}
 				</div>
 			</section>
 		</>

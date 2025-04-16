@@ -1,5 +1,5 @@
 // import React from "react";
-import { getRandomInterviewCover } from "@/lib/utils";
+// import { getRandomInterviewCover } from "@/lib/utils";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { Button } from "./ui/button";
@@ -11,15 +11,20 @@ const InterviewCard = ({
 	// userId,
 	role,
 	type,
+	level,
 	techstack,
 	createdAt,
-}: InterviewCardProps) => {
+	coverImage,
+}: // idata,
+InterviewCardProps) => {
 	const feedback = null as Feedback | null;
 	const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
 
 	const formattedDate = dayjs(
 		feedback?.createdAt || createdAt || Date.now()
 	).format("MMM DD, YYYY");
+
+	// console.log(idata);
 
 	return (
 		<div className="card-border w-[360px] max-sm:w-full min-h-96">
@@ -30,7 +35,7 @@ const InterviewCard = ({
 					</div>
 
 					<Image
-						src={getRandomInterviewCover()}
+						src={coverImage!}
 						alt="interview-cover"
 						width={90}
 						height={90}
@@ -38,7 +43,9 @@ const InterviewCard = ({
 					/>
 
 					<h3 className="mt-3 capitalize">{role} Interview</h3>
-					{/* <p>{level}</p> */}
+					<span className="badge-text bg-cyan-900 px-1.5 py-0.5 rounded-lg">
+						{level}
+					</span>
 
 					<div className="flex flex-row gap-5 mt-3">
 						<div className="flex flex-row gap-2">
