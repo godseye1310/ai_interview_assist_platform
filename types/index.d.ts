@@ -14,6 +14,7 @@ interface Feedback {
 }
 
 interface Interview {
+	coverImage: string | StaticImport;
 	id: string;
 	role: string;
 	level: string;
@@ -39,7 +40,7 @@ interface User {
 }
 
 interface InterviewCardProps {
-	interviewId?: string;
+	id?: string;
 	userId?: string;
 	role: string;
 	type: string;

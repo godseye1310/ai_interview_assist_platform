@@ -37,3 +37,11 @@ export async function fetchLatestInterviewsList(
 		};
 	}) as Interview[];
 }
+
+export async function fetchInterviewById(
+	id: string
+): Promise<Interview | null> {
+	const interview = await db.collection("interviews").doc(id).get();
+
+	return interview.data() as Interview | null;
+}

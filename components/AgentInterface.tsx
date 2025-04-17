@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { vapi } from "@/lib/vapi.sdk";
+import { interviewer } from "@/constants";
 // import { toast } from "sonner";
 
 enum CallStatus {
@@ -19,7 +20,13 @@ interface SavedMessage {
 	content: string;
 }
 
-const AgentInterface = ({ userName, userId, type }: AgentProps) => {
+const AgentInterface = ({
+	userName,
+	userId,
+	type,
+	interviewId,
+	questions,
+}: AgentProps) => {
 	const router = useRouter();
 
 	const [isSpeaking, setIsSpeaking] = useState(false);
@@ -69,21 +76,64 @@ const AgentInterface = ({ userName, userId, type }: AgentProps) => {
 		};
 	}, []);
 
+	const handleGenerateFeedback = async () => {
+		console.log("Generate feedback here");
+
+		const { success, id } = {
+			success: true,
+			id: "feedback-id",
+		};
+
+		if (success && id) {
+			router.push(`/interview/${interviewId}/feedback`);
+		} else {
+			console.log("Error generating feedback");
+			router.push("/");
+		}
+	};
+
 	useEffect(() => {
 		if (callStatus === CallStatus.FINISHED) {
-			router.push("/");
+			if (type === "generate") {
+				// router.push(`/interview/${interviewId}/feedback`);
+				router.push("/");
+			} else {
+				//
+				handleGenerateFeedback();
+			}
 		}
 	}, [messages, callStatus, type, userId, router]);
 
 	const handleCall = async () => {
 		setCallStatus(CallStatus.CONNECTING);
 
-		await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-			variableValues: {
-				username: userName,
-				userid: userId,
-			},
-		});
+		if (type === "generate") {
+			await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+				variableValues: {
+					username: userName,
+					userid: userId,
+				},
+			});
+		} else {
+			// take an interview workflow
+			let formattedQuestions = "";
+
+			if (questions) {
+				formattedQuestions = questions
+					.map((question) => {
+						return `- ${question}`;
+					})
+					.join("\n");
+			}
+
+			await vapi.start(interviewer, {
+				variableValues: {
+					// username: userName,
+					// userid: userId,
+					questions: formattedQuestions,
+				},
+			});
+		}
 	};
 
 	const handleDisconnect = async () => {
