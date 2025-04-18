@@ -14,6 +14,8 @@ import React from "react";
 const page = async () => {
 	const user = await getCurrentUser();
 
+	if (!user) return <div>Loading...</div>;
+
 	// parallel fetching using Promise.all
 	const [userInterviewsList, latestInterviewsList] = await Promise.all([
 		fetchInterviewListByUserId(user?.id!),
@@ -21,6 +23,7 @@ const page = async () => {
 	]);
 	// const interviewsList = await fetchInterviewListByUserId(user?.id!);
 	// const latestInterviews = await fetchLatestInterviewsList({ userId: user?.id! });
+	// console.log(userInterviewsList);
 
 	const hasUserInterviews = userInterviewsList
 		? userInterviewsList?.length > 0
@@ -66,6 +69,7 @@ const page = async () => {
 								<InterviewCard
 									key={interview.id}
 									{...interview}
+									currentUserId={user?.id!}
 								/>
 							);
 						})
@@ -85,6 +89,7 @@ const page = async () => {
 								<InterviewCard
 									key={interview.id}
 									{...interview}
+									currentUserId={user?.id!}
 								/>
 							);
 						})

@@ -5,8 +5,9 @@ import Image from "next/image";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import DisplayTechIcons from "./DisplayTechIcons";
+import { getFeedbackByInterviewId } from "@/lib/actions/general.actions";
 
-const InterviewCard = ({
+const InterviewCard = async ({
 	id,
 	// userId,
 	role,
@@ -15,9 +16,21 @@ const InterviewCard = ({
 	techstack,
 	createdAt,
 	coverImage,
+	currentUserId,
 }: // idata,
 InterviewCardProps) => {
-	const feedback = null as Feedback | null;
+	const feedback =
+		currentUserId && id
+			? await getFeedbackByInterviewId({
+					interviewId: id,
+					userId: currentUserId,
+			  })
+			: null;
+
+	// console.log(feedback);
+	// console.log(currentUserId);
+	// console.log(id);
+
 	const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
 
 	const formattedDate = dayjs(

@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { vapi } from "@/lib/vapi.sdk";
 import { interviewer } from "@/constants";
+import { createFeedback } from "@/lib/actions/general.actions";
 // import { toast } from "sonner";
 
 enum CallStatus {
@@ -76,33 +77,45 @@ const AgentInterface = ({
 		};
 	}, []);
 
-	const handleGenerateFeedback = async () => {
-		console.log("Generate feedback here");
+	const handleGenerateFeedback = useCallback(async () => {
+		// console.log("Generate feedback here");
+		// Create  server action that generates feedback
 
-		const { success, id } = {
-			success: true,
-			id: "feedback-id",
-		};
-
-		if (success && id) {
-			router.push(`/interview/${interviewId}/feedback`);
-		} else {
-			console.log("Error generating feedback");
-			router.push("/");
+		if (!interviewId || !userId) {
+			console.log("Missing interviewId or userId");
+			return;
 		}
-	};
+
+		try {
+			const { success, feedbackId } = await createFeedback({
+				interviewId: interviewId!,
+				userId: userId!,
+				transcript: messages,
+			});
+
+			if (success && feedbackId) {
+				router.push(`/interview/${interviewId}/feedback`);
+			} else {
+				console.log("Error generating feedback");
+				router.push("/");
+			}
+		} catch (error) {
+			console.log(error);
+			return;
+		}
+	}, [interviewId, userId, messages, router]);
 
 	useEffect(() => {
 		if (callStatus === CallStatus.FINISHED) {
 			if (type === "generate") {
-				// router.push(`/interview/${interviewId}/feedback`);
+				// router.push(`/interview/${interviewId}`);
 				router.push("/");
 			} else {
 				//
 				handleGenerateFeedback();
 			}
 		}
-	}, [messages, callStatus, type, userId, router]);
+	}, [callStatus, type, interviewId, router, handleGenerateFeedback]);
 
 	const handleCall = async () => {
 		setCallStatus(CallStatus.CONNECTING);
@@ -128,20 +141,23 @@ const AgentInterface = ({
 
 			await vapi.start(interviewer, {
 				variableValues: {
-					// username: userName,
-					// userid: userId,
 					questions: formattedQuestions,
 				},
 			});
 		}
 	};
+	// console.log(messages);
 
 	const handleDisconnect = async () => {
 		setCallStatus(CallStatus.INACTIVE);
 		vapi.stop();
 	};
 
-	const latestMessage = messages[messages.length - 1]?.content;
+	const latestMessage2 =
+		messages.length > 3 ? messages[messages.length - 3] : undefined;
+	const latestMessage1 =
+		messages.length > 2 ? messages[messages.length - 2] : undefined;
+	const latestMessage = messages[messages.length - 1];
 
 	const isCallInActiveOrFinished =
 		callStatus === CallStatus.INACTIVE ||
@@ -186,13 +202,17 @@ const AgentInterface = ({
 					<div className="transcript-border">
 						<div className="transcript">
 							<p
-								key={latestMessage}
+								key={latestMessage?.content}
 								className={cn(
 									"transition-opacity duration-500 opacity-0",
 									"animate-fadeIn opacity-100"
 								)}
 							>
-								{latestMessage}
+								{messages.length > 3 &&
+									`${latestMessage2?.role} : ${latestMessage2?.content}`}
+								{messages.length > 3 &&
+									`${latestMessage1?.role} : ${latestMessage1?.content}`}
+								{`${latestMessage.role} : ${latestMessage?.content}`}
 							</p>
 						</div>
 					</div>
