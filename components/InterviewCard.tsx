@@ -40,7 +40,7 @@ InterviewCardProps) => {
 	// console.log(idata);
 
 	return (
-		<div className="card-border w-[360px] max-sm:w-full min-h-96">
+		<div className="card-border w-[360px] max-[882px]:w-[330px] max-[820px]:w-[300px] max-md:w-full min-h-96">
 			<div className="card-interview">
 				<div>
 					<div className="absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg bg-light-600">

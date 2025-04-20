@@ -3,10 +3,12 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { vapi } from "@/lib/vapi.sdk";
 import { interviewer } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.actions";
+import { toast } from "sonner";
+import Chatui from "./Chatui";
 // import { toast } from "sonner";
 
 enum CallStatus {
@@ -55,8 +57,16 @@ const AgentInterface = ({
 		const onSpeechStart = () => setIsSpeaking(true);
 		const onSpeechEnd = () => setIsSpeaking(false);
 
-		const onError = (error: Error) => {
-			console.log("Error:", error);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const onError = (err: any) => {
+			if (
+				err?.error?.type === "no-room" ||
+				err?.error?.msg?.incldes("room was deleted")
+			) {
+				return;
+			}
+			//
+			console.log("Error:", err);
 			// toast.error(error.message);
 		};
 
@@ -110,12 +120,24 @@ const AgentInterface = ({
 			if (type === "generate") {
 				// router.push(`/interview/${interviewId}`);
 				router.push("/");
+				toast.success("Interview has been generated successfully");
 			} else {
 				//
 				handleGenerateFeedback();
 			}
 		}
 	}, [callStatus, type, interviewId, router, handleGenerateFeedback]);
+
+	const transcriptRef = useRef<HTMLDivElement>(null);
+	// Scroll to bottom whenever messages change
+	useEffect(() => {
+		const el = transcriptRef.current;
+		if (el) {
+			el.scrollTop = el.scrollHeight;
+		}
+	}, [messages]);
+
+	console.log(messages);
 
 	const handleCall = async () => {
 		setCallStatus(CallStatus.CONNECTING);
@@ -153,11 +175,9 @@ const AgentInterface = ({
 		vapi.stop();
 	};
 
-	const latestMessage2 =
-		messages.length > 3 ? messages[messages.length - 3] : undefined;
-	const latestMessage1 =
-		messages.length > 2 ? messages[messages.length - 2] : undefined;
-	const latestMessage = messages[messages.length - 1];
+	// const latestMessage2 = messages.length > 3 ? messages[messages.length - 3] : undefined;
+	// const latestMessage1 = messages.length > 2 ? messages[messages.length - 2] : undefined;
+	// const latestMessage = messages[messages.length - 1];
 
 	const isCallInActiveOrFinished =
 		callStatus === CallStatus.INACTIVE ||
@@ -165,6 +185,7 @@ const AgentInterface = ({
 
 	return (
 		<>
+			{/* <div className="w-full h-screen bg-amber-50 opacity-30 z-50"></div> */}
 			<div className="call-view">
 				{/* AI Agent Interface */}
 				<div className="card-interviewer">
@@ -196,29 +217,22 @@ const AgentInterface = ({
 					</div>
 				</div>
 			</div>
-
 			<div>
 				{messages.length > 0 && (
-					<div className="transcript-border">
-						<div className="transcript">
-							<p
-								key={latestMessage?.content}
-								className={cn(
-									"transition-opacity duration-500 opacity-0",
-									"animate-fadeIn opacity-100"
-								)}
+					<div className="chat-border">
+						<div className="chat-container">
+							<div
+								className="transcript py-1.5 pr-4 pl-0"
+								ref={transcriptRef}
 							>
-								{messages.length > 3 &&
-									`${latestMessage2?.role} : ${latestMessage2?.content}`}
-								{messages.length > 3 &&
-									`${latestMessage1?.role} : ${latestMessage1?.content}`}
-								{`${latestMessage.role} : ${latestMessage?.content}`}
-							</p>
+								{messages.map((message, i) => {
+									return <Chatui key={i} message={message} />;
+								})}
+							</div>
 						</div>
 					</div>
 				)}
 			</div>
-
 			<div className="w-full flex justify-center">
 				{callStatus !== "ACTIVE" ? (
 					<button onClick={handleCall} className="relative btn-call">

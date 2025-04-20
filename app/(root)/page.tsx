@@ -34,29 +34,38 @@ const page = async () => {
 
 	return (
 		<>
-			<section className="card-cta">
-				<div className="flex flex-col gap-6 max-w-lg">
-					<h2 className="">
-						Get Interview-Ready with AI-Powered Practice and
-						Feedback.
-					</h2>
-					<p className="text-light-100 text-lg">
-						Practice on real interview questions & get instant
-						feedback with our AI-powered platform.
-					</p>
-					<Button asChild className="btn-primary max-sm:w-full">
-						<Link href="/interview">
-							<span>Start an Interview</span>
-						</Link>
-					</Button>
+			<section className="card-cta gap-y-5">
+				<h2 className="min-[1005px]:hidden">
+					Ace your interview with AI-Powered Practice and Feedback
+				</h2>
+				<div className="flex flex-row items-start max-md:flex-col max-md:gap-6 max-md:items-center">
+					<div className="flex flex-col gap-6 max-w-lg">
+						<h2 className="max-[1005px]:hidden">
+							Ace your interview with AI-Powered Practice and
+							Feedback
+						</h2>
+						<p className="text-light-100 text-lg">
+							Practice on real interview questions & get instant
+							feedback with our AI-powered platform.
+						</p>
+						<Button
+							asChild
+							className="btn-primary max-md:w-full max-md:m-auto"
+						>
+							<Link href="/interview">
+								<span>Start an Interview</span>
+							</Link>
+						</Button>
+					</div>
+
+					<Image
+						src="/robot.png"
+						alt="ai-dude"
+						width={400}
+						height={400}
+						className=" animate-fadeIn"
+					/>
 				</div>
-				<Image
-					src="/robot.png"
-					alt="ai-dude"
-					width={400}
-					height={400}
-					className="max-sm:hidden animate-fadeIn"
-				/>
 			</section>
 
 			<section className="flex flex-col gap-6 mt-8">
