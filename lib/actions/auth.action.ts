@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { auth, db } from "@/firebase/admin";
-import { cookies } from "next/headers";
+import { auth, db } from "@/firebase/admin"; // for Firebase Admin SDK
+import { cookies } from "next/headers"; // for reading cookies
 
 // Session duration
-const ONE_WEEK = 7 * 24 * 60 * 60;
+const ONE_DAY_IN_SECONDS = 24 * 60 * 60;
+const ONE_WEEK_IN_SECONDS = 7 * ONE_DAY_IN_SECONDS;
 
 // Sign up a new user
 export async function signUp(params: SignUpParams) {
@@ -28,14 +29,8 @@ export async function signUp(params: SignUpParams) {
 		};
 		//
 	} catch (error: any) {
-		console.log("Error creating a user:", error);
+		console.log("Error:", error);
 
-		if (error.code === "auth/email-already-in-use") {
-			return {
-				success: false,
-				message: "Email already in use",
-			};
-		}
 		return {
 			success: false,
 			message: "Error creating user",
@@ -49,7 +44,9 @@ export async function signIn(params: SignInParams) {
 	const { idToken, email } = params;
 
 	try {
+		// checking if the user exists in the firebase auth
 		const userRecord = await auth.getUserByEmail(email);
+		// console.log(userRecord);
 		if (!userRecord) {
 			return {
 				success: false,
@@ -58,6 +55,11 @@ export async function signIn(params: SignInParams) {
 		}
 
 		await setSessionCookie(idToken);
+		//
+		return {
+			success: true,
+			message: "Signed in successfully",
+		};
 		//
 	} catch (error: any) {
 		console.log("Error signing in:", error);
@@ -68,17 +70,58 @@ export async function signIn(params: SignInParams) {
 	}
 }
 
+// Sign in with a third-party provider
+export async function signInUserWithProvider(params: SignInWithProviderParams) {
+	const { uid, name, email, idToken } = params;
+
+	try {
+		const userRecord = await db.collection("users").doc(uid).get();
+
+		//
+		// console.log(userRecord);
+		let userExistsInDB = true;
+
+		if (!userRecord.exists) {
+			userExistsInDB = false;
+			// add user to db
+			await db.collection("users").doc(uid).set({
+				name,
+				email,
+			});
+		}
+
+		await setSessionCookie(idToken);
+
+		return {
+			success: true,
+			message: "Signed In Successfully",
+			userExistsInDB,
+		};
+		//
+	} catch (error) {
+		console.log("Error signing in:", error);
+		return {
+			success: false,
+			message: "Error signing in",
+		};
+	}
+}
+
 // Set the session cookie
 export async function setSessionCookie(idToken: string) {
 	const cookieStore = await cookies();
 
-	const sessionCookie = await auth.createSessionCookie(idToken, {
-		expiresIn: ONE_WEEK * 1000, // 7 days
+	// Create a session cookie from the ID token:
+	//  - signed by Firebase Admin SDK
+	//  - expiresIn is in **milliseconds** (so ONE_WEEK * 1000)
+	const sessionToken = await auth.createSessionCookie(idToken, {
+		expiresIn: ONE_WEEK_IN_SECONDS * 1000, // 7 days (in milliseconds)
 	});
 
-	cookieStore.set("session", sessionCookie, {
-		maxAge: ONE_WEEK, // 7 days
-		httpOnly: true,
+	// Send that cookie back to the client:
+	cookieStore.set("session", sessionToken, {
+		maxAge: ONE_WEEK_IN_SECONDS, // in seconds (7 days)
+		httpOnly: true, // <-- not accessible from JS
 		secure: process.env.NODE_ENV === "production",
 		path: "/",
 		sameSite: "lax",
@@ -88,13 +131,15 @@ export async function setSessionCookie(idToken: string) {
 // Get the user
 export async function getCurrentUser(): Promise<User | null> {
 	const cookieStore = await cookies();
-	const sessionCookie = cookieStore.get("session")?.value;
-	if (!sessionCookie) {
+	// Get the session token from the from the cookie store:
+	const sessionToken = cookieStore.get("session")?.value;
+	if (!sessionToken) {
 		return null;
 	}
+	// Verify the session token:
 	try {
 		const decodedClaims = await auth.verifySessionCookie(
-			sessionCookie,
+			sessionToken,
 			true
 		);
 		const userRecord = await db

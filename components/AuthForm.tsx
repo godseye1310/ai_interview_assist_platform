@@ -5,7 +5,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
 	createUserWithEmailAndPassword,
+	GithubAuthProvider,
+	GoogleAuthProvider,
 	signInWithEmailAndPassword,
+	signInWithPopup,
 } from "firebase/auth";
 
 // importing form-components from shadcn ui
@@ -17,7 +20,11 @@ import { toast } from "sonner";
 import FormField from "./FormField";
 import { useRouter } from "next/navigation";
 import { auth } from "@/firebase/client";
-import { signIn, signUp } from "@/lib/actions/auth.action";
+import {
+	signIn,
+	signInUserWithProvider,
+	signUp,
+} from "@/lib/actions/auth.action";
 
 // 1. Define your form schema.
 const authFormSchema = (type: FormType) => {
@@ -44,7 +51,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
 	const router = useRouter();
 
-	// 2. Define a submit handler.
+	// 2. Define a Form submit handler for Auth Form.
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		// Do something with the form values.
 		// ✅ This will be type-safe and validated.
@@ -53,14 +60,13 @@ const AuthForm = ({ type }: { type: FormType }) => {
 			if (type === "sign-up") {
 				// Sign up the user
 				const { name, email, password } = values;
-
 				const userCredentials = await createUserWithEmailAndPassword(
 					auth,
 					email,
 					password
 				);
 				// console.log(userCredentials);
-
+				// providerId is null because we are using email and password
 				const response = await signUp({
 					uid: userCredentials.user.uid,
 					name: name!,
@@ -69,53 +75,132 @@ const AuthForm = ({ type }: { type: FormType }) => {
 				});
 
 				if (!response?.success) {
-					toast.error(response?.message);
-					return;
+					throw new Error(response?.message);
 				}
-
-				toast.success("Account created successfully. Please sign in");
+				toast.success(response?.message);
 				router.push("/sign-in");
+				//
 			} else {
 				// Sign in the user
 				const { email, password } = values;
 
-				const userCredential = await signInWithEmailAndPassword(
+				const userCredentials = await signInWithEmailAndPassword(
 					auth,
 					email,
 					password
 				);
+				// console.log(userCredentials.user);
+				const idToken = await userCredentials.user.getIdToken();
 
-				const idToken = await userCredential.user.getIdToken();
 				if (!idToken) {
-					toast.error("Sign in failed. Please try again.");
-					return;
+					throw new Error("Sign in failed. Please try again.");
 				}
 
-				// console.log(userCredentials);
 				const response = await signIn({
 					idToken,
+					uid: userCredentials.user.uid,
 					email,
 				});
 
-				console.log(response);
-
-				// if (!response?.success) {
-				// 	toast.error(response?.message);
-				// 	return;
-				// }
+				if (!response?.success) {
+					throw new Error(response?.message);
+				}
 
 				toast.success("Signed in successfully");
 				router.push("/");
 			}
-
 			// console.log(values);
-		} catch (error) {
+			//
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} catch (error: any) {
 			console.log(error);
-			toast.error(`Error: ${error}`);
+			console.log(error.code);
+			let message = error?.message;
+			if (error.code === "auth/email-already-in-use") {
+				message = "Email already in use";
+			}
+			if (error.code === "auth/invalid-credential") {
+				message = "Check your email and password";
+			}
+
+			toast.error(`${message}`);
 		}
 	}
 
 	const isSignIn = type === "sign-in";
+
+	const handleGoogleSignIn = async () => {
+		const provider = new GoogleAuthProvider();
+		try {
+			const userCredentials = await signInWithPopup(auth, provider);
+
+			const idToken = await userCredentials.user.getIdToken();
+			if (!idToken) {
+				toast.error("Sign in failed. Please try again.");
+				return;
+			}
+			// console.log(userCredentials);
+			const { uid, displayName, email, photoURL } = userCredentials.user;
+
+			const response = await signInUserWithProvider({
+				idToken,
+				uid,
+				name: displayName!,
+				email: email!,
+				photoURL: photoURL!,
+				providerId: userCredentials.providerId!,
+			});
+			// console.log(response);
+
+			if (!response?.success) {
+				throw new Error(response?.message);
+			}
+
+			toast.success(response?.message);
+			router.push("/");
+			//
+		} catch (error) {
+			console.log(error);
+			// toast.error(`Error Signing in with Google`);
+		}
+	};
+
+	const handleGithubSignIn = async () => {
+		const provider = new GithubAuthProvider();
+		try {
+			const userCredentials = await signInWithPopup(auth, provider);
+			console.log(userCredentials);
+			const idToken = await userCredentials.user.getIdToken();
+			if (!idToken) {
+				toast.error("Sign in failed. Please try again.");
+				return;
+			}
+			console.log(userCredentials.user);
+
+			const { uid, displayName, email, photoURL } = userCredentials.user;
+
+			const response = await signInUserWithProvider({
+				idToken,
+				uid,
+				name: displayName!,
+				email: email!,
+				photoURL: photoURL!,
+				providerId: userCredentials.providerId!,
+			});
+			console.log(response);
+
+			if (!response?.success) {
+				throw new Error(response?.message);
+			}
+
+			toast.success(response?.message);
+			router.push("/");
+			//
+		} catch (error) {
+			console.log(error);
+			// toast.error(`Error Signing in with Github`);
+		}
+	};
 
 	return (
 		<div className="card-border lg:min-[556px]:">
@@ -167,11 +252,34 @@ const AuthForm = ({ type }: { type: FormType }) => {
 						: "Already have an account? "}
 					<Link
 						href={isSignIn ? "/sign-up" : "/sign-in"}
-						className="font-bold text-user-primary ml-1"
+						className="font-bold text-user-primary ml-1 text-blue-500"
 					>
 						{isSignIn ? "Sign Up" : "Sign In"}
 					</Link>
 				</p>
+
+				<div className="flex flex-row justify-between items-center">
+					<hr className="flex-1/2" />
+					<p className="text-center text-xs flex-1/5">OR</p>
+					<hr className="flex-1/2" />
+				</div>
+				<p className="text-center text-sm">Continue with</p>
+				<div className="flex flex-col md:flex-row gap-2 justify-center">
+					<Button
+						className="w-full md:w-1/2"
+						type="button"
+						onClick={handleGoogleSignIn}
+					>
+						Sign In with Google
+					</Button>
+					<Button
+						className="w-full md:w-1/2"
+						type="button"
+						onClick={handleGithubSignIn}
+					>
+						Sign In with Github
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
