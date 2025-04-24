@@ -165,3 +165,16 @@ export async function getAuthentication() {
 
 	return !!user;
 }
+
+// Authentication session revalidation
+export async function refreshSession(idToken: string) {
+	// re‑mint & set a fresh 7‑day cookie
+	await setSessionCookie(idToken);
+}
+
+// Delete the session cookie
+export async function deleteSessionCookie() {
+	const cookieStore = await cookies();
+	// Deletes the “session-token” from the browser cookie store : (so subsequent requests are unauthenticated)
+	cookieStore.delete({ name: "session", path: "/" });
+}

@@ -35,6 +35,8 @@ const authFormSchema = (type: FormType) => {
 	});
 };
 
+const LAST_REFRESH_KEY = "lastSessionRefresh";
+
 // 2. Define your form component.
 // Use the useForm hook from react-hook-form to create a form.
 const AuthForm = ({ type }: { type: FormType }) => {
@@ -65,6 +67,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 					email,
 					password
 				);
+
 				// console.log(userCredentials);
 				// providerId is null because we are using email and password
 				const response = await signUp({
@@ -105,7 +108,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 				if (!response?.success) {
 					throw new Error(response?.message);
 				}
-
+				localStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
 				toast.success("Signed in successfully");
 				router.push("/");
 			}
@@ -150,12 +153,12 @@ const AuthForm = ({ type }: { type: FormType }) => {
 				photoURL: photoURL!,
 				providerId: userCredentials.providerId!,
 			});
-			// console.log(response);
+			console.log(response);
 
 			if (!response?.success) {
 				throw new Error(response?.message);
 			}
-
+			localStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
 			toast.success(response?.message);
 			router.push("/");
 			//
@@ -169,13 +172,14 @@ const AuthForm = ({ type }: { type: FormType }) => {
 		const provider = new GithubAuthProvider();
 		try {
 			const userCredentials = await signInWithPopup(auth, provider);
-			console.log(userCredentials);
+
+			//console.log(userCredentials);
+
 			const idToken = await userCredentials.user.getIdToken();
 			if (!idToken) {
 				toast.error("Sign in failed. Please try again.");
 				return;
 			}
-			console.log(userCredentials.user);
 
 			const { uid, displayName, email, photoURL } = userCredentials.user;
 
@@ -187,12 +191,12 @@ const AuthForm = ({ type }: { type: FormType }) => {
 				photoURL: photoURL!,
 				providerId: userCredentials.providerId!,
 			});
-			console.log(response);
+			// console.log(response);
 
 			if (!response?.success) {
 				throw new Error(response?.message);
 			}
-
+			localStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
 			toast.success(response?.message);
 			router.push("/");
 			//
