@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { auth, db } from "@/firebase/admin"; // for Firebase Admin SDK
+import { auth, db } from "@/firebase/admin"; // form Firebase Admin configuration
 import { cookies } from "next/headers"; // for reading cookies
 
 // Session duration

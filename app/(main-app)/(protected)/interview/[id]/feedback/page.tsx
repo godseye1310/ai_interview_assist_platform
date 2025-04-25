@@ -11,13 +11,14 @@ const page = async ({ params }: RouteParams) => {
 	const { id } = await params;
 	// console.log(id);
 	const user = await getCurrentUser();
-	// console.log(user);
 
 	const feedback = await getFeedbackByInterviewId({
 		interviewId: id,
 		// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
 		userId: user?.id!,
 	});
+
+	console.log({ userid: user?.id, interviewId: id });
 
 	// console.log(feedback);
 

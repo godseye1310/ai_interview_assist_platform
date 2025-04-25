@@ -193,6 +193,10 @@
 		@apply dark-gradient rounded-2xl min-h-full;
 	}
 
+	.card-interview-size {
+		@apply w-[360px] max-[1260px]:w-[350px] max-[1225px]:w-[340px] max-[1195px]:w-[330px] max-[1165px]:w-[315px] max-[1120px]:w-[300px] max-[1075px]:w-[290px] max-[1050px]:w-[280px] max-[1015px]:w-[265px] max-[970px]:w-[390px] max-[940px]:w-[380px] max-[920px]:w-[360px] max-[882px]:w-[330px] max-[820px]:w-[300px] max-md:w-full min-h-96;
+	}
+
 	.form {
 		@apply w-full;
 

@@ -99,6 +99,7 @@ export async function createFeedback(params: CreateFeedbackParams) {
 			areasForImprovement,
 			finalAssessment,
 			createdAt: new Date().toISOString(),
+			transcript,
 		});
 
 		return {

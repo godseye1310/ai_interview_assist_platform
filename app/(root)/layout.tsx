@@ -1,25 +1,29 @@
-import Navbar from "@/components/Navbar";
-import SessionRefresher from "@/components/SessionRefresher";
+import "../globals.css";
 import { getAuthentication } from "@/lib/actions/auth.action";
 import { redirect } from "next/navigation";
 import React from "react";
 
-const Rootlayout = async ({ children }: { children: React.ReactNode }) => {
+const LandingPagelayout = async ({
+	children,
+}: {
+	children: React.ReactNode;
+}) => {
 	const isAuthenticated: boolean = await getAuthentication();
 
-	if (!isAuthenticated) {
+	if (isAuthenticated) {
+		redirect("/home");
+	} else {
+		// can remove this line if you build the landing page
 		redirect("/sign-in");
 	}
 
 	return (
-		<>
-			<SessionRefresher />
-			<div className="root-layout">
-				<Navbar />
-				{children}
-			</div>
-		</>
+		<html lang="en" className="dark">
+			<body className={`antialiased pattern`}>
+				<div className="root-layout">{children}</div>
+			</body>
+		</html>
 	);
 };
 
-export default Rootlayout;
+export default LandingPagelayout;

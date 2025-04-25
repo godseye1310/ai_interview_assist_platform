@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 // import React from 'react'
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -110,7 +111,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 				}
 				localStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
 				toast.success("Signed in successfully");
-				router.push("/");
+				router.push("/home");
 			}
 			// console.log(values);
 			//
@@ -124,6 +125,11 @@ const AuthForm = ({ type }: { type: FormType }) => {
 			}
 			if (error.code === "auth/invalid-credential") {
 				message = "Check your email and password";
+			}
+			if (error.code === "auth/network-request-failed") {
+				message = "Network error. Please try again later";
+			} else {
+				message = "Something went wrong. Please try again later";
 			}
 
 			toast.error(`${message}`);
@@ -160,11 +166,17 @@ const AuthForm = ({ type }: { type: FormType }) => {
 			}
 			localStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
 			toast.success(response?.message);
-			router.push("/");
+			router.push("/home");
 			//
-		} catch (error) {
+		} catch (error: any) {
 			console.log(error);
+			let message = "Error Signing in with Google";
+			if (error?.code === "auth/network-request-failed") {
+				message = "Network error. Please try again later";
+				toast.error(`${message}`);
+			}
 			// toast.error(`Error Signing in with Google`);
+			console.log(message);
 		}
 	};
 
@@ -198,11 +210,17 @@ const AuthForm = ({ type }: { type: FormType }) => {
 			}
 			localStorage.setItem(LAST_REFRESH_KEY, Date.now().toString());
 			toast.success(response?.message);
-			router.push("/");
+			router.push("/home");
 			//
-		} catch (error) {
+		} catch (error: any) {
 			console.log(error);
+			let message = "Error Signing in with Github";
+			if (error?.code === "auth/network-request-failed") {
+				message = "Network error. Please try again later";
+				toast.error(`${message}`);
+			}
 			// toast.error(`Error Signing in with Github`);
+			console.log(message);
 		}
 	};
 
